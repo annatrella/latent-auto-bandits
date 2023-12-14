@@ -1,21 +1,23 @@
 from environment import *
-from agents import *
+from ucb_agents import StationaryAgent, NaiveNlaTS, NonStatOracle
 import numpy as np
 import json
 import os
 from scipy.stats import bernoulli
 
 GAMMA_SEED = 2023
-EXP_SEED = 123
+EXP_SEED = 234
 ### TRUE ENV. PARAMS ###
 K = 5
 np.random.seed(GAMMA_SEED)
 # need gammas to be between -1 and 1 or else things will blow up
-gammas = np.clip(np.random.randn(K), -1, 1)
+# gammas = np.clip(np.random.randn(K), -1, 0.999)
+gammas = np.array([0.2, 0.1, 0.3, 0.2, 0.1])
 print("GAMMAS", gammas)  
 env_params = {
     "K": K,
-    "noise_var": 1e-3,
+    # "noise_var": 1e-3,
+    "noise_var": 1,
     "gamma_0": 0.2,
     "gammas": gammas,
     "beta_0": [1.0, 2.0],
@@ -24,17 +26,10 @@ env_params = {
 }
 
 ### AGENT PARAMS ###
-c = 10 # weakly informative
-stat_prior_mean = 0
-stat_prior_sd = c
-non_stat_prior_mean = np.zeros(K + 1)
-non_stat_prior_var = c * np.identity(K + 1)
-oracle_prior_mean = np.zeros(2)
-oracle_prior_var = c * np.identity(2)
 
-STAT_AGENT = StationaryAgent(stat_prior_mean, stat_prior_sd)
-NAIVE_NON_STAT_AGENT = NaiveNlaTS(non_stat_prior_mean, non_stat_prior_var)
-ORACLE = Oracle(oracle_prior_mean, oracle_prior_var)
+STAT_AGENT = StationaryAgent()
+NAIVE_NON_STAT_AGENT = NaiveNlaTS(K + 1)
+NON_STAT_ORACLE = NonStatOracle(env_params, K + 1)
 
 def run_simulation(env, agent, seed):
     np.random.seed(seed)
@@ -59,9 +54,8 @@ def run_simulation(env, agent, seed):
         ### produce reward ###
         rewards[t] = env.get_reward(int(actions[t]))
         ### update ###
-        noise_var = env.get_noise_var()
         # we do not update with first K time-steps
-        agent.update(actions[K:t], rewards[K:t], states[K:t], noise_var)
+        agent.update(actions[t], rewards[t], states[t])
         ### increment t ###  
         env.increment_t()
     
@@ -71,20 +65,32 @@ def calculate_ground_truth(env, seed):
     np.random.seed(seed)
     T = env.get_T()
     ground_truth = {
-        "reward 1": np.empty(T),
-        "reward 0": np.empty(T),
-        "optimal action": np.empty(T)
+        "mean reward 1": np.empty(T),
+        "mean reward 0": np.empty(T),
+        "optimal action": np.empty(T),
+        "optimal reward": np.empty(T)
     }
+    for t in range(K):
+        ground_truth["mean reward 1"][t] = env.get_noiseless_reward(1)
+        ground_truth["mean reward 0"][t] = env.get_noiseless_reward(0)
+        optimal_action = int(ground_truth["mean reward 1"][t] > ground_truth["mean reward 0"][t])
+        ground_truth["optimal action"][t] = optimal_action
+        reward = env.get_reward(optimal_action)
+        ground_truth["optimal reward"][t] = reward        
     while env.get_t() < T:
             ### environment ###
             t = env.get_t()
             print(f"Time Step: {t}")
             env.state_evolution()
             ### get ground truth rewards reward ###
-            ground_truth["reward 1"][t] = env.get_noiseless_reward(1)
-            ground_truth["reward 0"][t] = env.get_noiseless_reward(0)
+            ground_truth["mean reward 1"][t] = env.get_noiseless_reward(1)
+            ground_truth["mean reward 0"][t] = env.get_noiseless_reward(0)
             # which action is best for this time-step t
-            ground_truth["optimal action"][t] = int(ground_truth["reward 1"][t] > ground_truth["reward 0"][t])
+            optimal_action = int(ground_truth["mean reward 1"][t] > ground_truth["mean reward 0"][t])
+            ground_truth["optimal action"][t] = optimal_action
+            # generate reward
+            reward = env.get_reward(optimal_action)
+            ground_truth["optimal reward"][t] = reward
             ### increment t ###  
             env.increment_t()
 
@@ -94,7 +100,7 @@ NUM_TIME_STEPS = 100
 ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), EXP_SEED)
 stat_actions, stat_rewards = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), STAT_AGENT, EXP_SEED)
 non_stat_actions, non_stat_rewards = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), NAIVE_NON_STAT_AGENT, EXP_SEED)
-oracle_actions, oracle_rewards = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), ORACLE, EXP_SEED)
+non_stat_oracle_actions, non_stat_oracle_rewards = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), NON_STAT_ORACLE, EXP_SEED)
 
 RESULTS = {
     "stationary_agent": {
@@ -105,9 +111,9 @@ RESULTS = {
         "actions": non_stat_actions,
         "rewards": non_stat_rewards
     },
-    "oracle": {
-        "actions": oracle_actions,
-        "rewards": oracle_rewards
+    "non_stat_oracle": {
+        "actions": non_stat_oracle_actions,
+        "rewards": non_stat_oracle_rewards
     }
 }
 
@@ -130,8 +136,4 @@ if not os.path.exists(directory):
 
 save_to_json(os.path.join(directory, f"results_{EXP_SEED}.json"), RESULTS)
 save_to_json(os.path.join(directory,f"ground_truth_{EXP_SEED}.json"), ground_truth)
-
-# file_path = os.path.join(directory, f"results_{EXP_SEED}.json")
-# with open(file_path , 'w') as json_file:
-#     json.dump(RESULTS, json_file, default=convert_to_json_serializable)
 

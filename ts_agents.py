@@ -88,9 +88,9 @@ class NaiveNlaTS(Agent):
             self.posterior_means[a] = compute_posterior_mean(Phi, R, noise_var, self.prior_mean, self.prior_var, self.posterior_vars[a])
     
 ### Oracle that observes the latent process and uses it as its state ###
-class Oracle(Agent):
+class StandardOracle(Agent):
     def __init__(self, prior_mean, prior_var, num_actions=2):
-        super().__init__("oracle", prior_mean, prior_var, num_actions)
+        super().__init__("standard_oracle", prior_mean, prior_var, num_actions)
         self.posterior_means = [prior_mean] * num_actions
         self.posterior_vars = [prior_var] * num_actions
 
