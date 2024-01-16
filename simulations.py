@@ -1,5 +1,5 @@
 from environment import *
-from ucb_agents import StationaryAgent, NaiveNlaTS, NonStatOracle
+from ucb_agents import StationaryAgent, NaiveNSLAR, NonStatOracle
 import numpy as np
 import json
 import os
@@ -12,23 +12,23 @@ K = 5
 np.random.seed(GAMMA_SEED)
 # need gammas to be between -1 and 1 or else things will blow up
 # gammas = np.clip(np.random.randn(K), -1, 0.999)
-gammas = np.array([0.2, 0.1, 0.3, 0.2, 0.1])
+gammas = np.array([0.3, 0.1, -0.4, -0.2, 0.5])
 print("GAMMAS", gammas)  
 env_params = {
     "K": K,
-    # "noise_var": 1e-3,
-    "noise_var": 1,
+    "noise_var": 1e-3,
+    # "noise_var": 1,
     "gamma_0": 0.2,
     "gammas": gammas,
-    "beta_0": [1.0, 2.0],
-    "beta_1": [1.0, 2.0],
+    "beta_0": [0.25, -0.25],
+    "beta_1": [1.0, 1.5],
     "init_zs": np.zeros(K)
 }
 
 ### AGENT PARAMS ###
 
 STAT_AGENT = StationaryAgent()
-NAIVE_NON_STAT_AGENT = NaiveNlaTS(K + 1)
+NAIVE_NON_STAT_AGENT = NaiveNSLAR(K + 1)
 NON_STAT_ORACLE = NonStatOracle(env_params, K + 1)
 
 def run_simulation(env, agent, seed):
@@ -73,6 +73,8 @@ def calculate_ground_truth(env, seed):
     for t in range(K):
         ground_truth["mean reward 1"][t] = env.get_noiseless_reward(1)
         ground_truth["mean reward 0"][t] = env.get_noiseless_reward(0)
+        assert ground_truth["mean reward 1"][t] - ground_truth["mean reward 0"][t] <= 1
+        assert  ground_truth["mean reward 0"][t] - ground_truth["mean reward 1"][t] <= 1
         optimal_action = int(ground_truth["mean reward 1"][t] > ground_truth["mean reward 0"][t])
         ground_truth["optimal action"][t] = optimal_action
         reward = env.get_reward(optimal_action)
@@ -85,6 +87,8 @@ def calculate_ground_truth(env, seed):
             ### get ground truth rewards reward ###
             ground_truth["mean reward 1"][t] = env.get_noiseless_reward(1)
             ground_truth["mean reward 0"][t] = env.get_noiseless_reward(0)
+            assert ground_truth["mean reward 1"][t] - ground_truth["mean reward 0"][t] <= 1
+            assert  ground_truth["mean reward 0"][t] - ground_truth["mean reward 1"][t] <= 1
             # which action is best for this time-step t
             optimal_action = int(ground_truth["mean reward 1"][t] > ground_truth["mean reward 0"][t])
             ground_truth["optimal action"][t] = optimal_action
