@@ -7,10 +7,10 @@ Set experiment parameters such as `max_seed` or `num_time_steps` in the `global_
 
 `simulations.py` contains the skeleton code for running an experiment with an agent and an environment variant. There is also code for calculating the ground-truth optimal actions and mean rewards for each action.
 
-`run_simulations.py` is the script for running for running experiments in the main results section of our paper. We vary the true AR order k and the noise of the latent process. This script will save all results in the `experiment_results` folder.
+To recreate the results in the main experiments section of our paper, run `python3 run_simulations.py`. We vary the true AR order k and the noise of the latent process. This script will save all results in the `experiment_results` folder.
 
-`run_sims_wrong_k.py` is the script for running simulations where we considered our algorithm with different mis-specified values of AR order k. This script will save all results in the `experiment_results` folder.
+To recreate the ablation results in section considering different mis-specified values of AR order k, run `run_sims_wrong_k.py`. This script will save all results in the `experiment_results` folder.
 
-`stats_and_figs/make_plots.py` and `stats_and_figs/make_plots_wrong_k.py` creates the figures using experiment results saved in `experiment_results` with correct k and mis-specified k, respectively.
+To generate the figures in our paper, run `python3 stats_and_figs/make_plots.py` and `python3 stats_and_figs/make_plots_wrong_k.py`. These scripts generate figures using results saved in `experiment_results` with correct k and mis-specified k, respectively.
 
 
