@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Trella"
+  given-names: "Anna L."
+- family-names: "Dempsey"
+  given-names: "Walter"
+- family-names: "Doshi-Velez"
+  given-names: "Finale"
+- family-names: "Murphy"
+  given-names: "Susan A. Murphy"
+title: "Non-Stationary Latent Auto-Regressive Bandits"
+version: 1.0.0
+doi: 10.48550/arXiv.2402.03110
+date-released: 2024-02-01
+url: "https://github.com/annatrella/latent-auto-bandits"
+preferred-citation:
+  type: generic
+  authors:
+  - family-names: "Trella"
+    given-names: "Anna L."
+  - family-names: "Dempsey"
+    given-names: "Walter"
+  - family-names: "Doshi-Velez"
+    given-names: "Finale"
+  - family-names: "Murphy"
+    given-names: "Susan A. Murphy"
+  doi: "10.48550/arXiv.2402.03110"
+  title: "Non-Stationary Latent Auto-Regressive Bandits"
+  year: 2024
+  month: 2
+  journal: "arXiv"
+  url: "https://arxiv.org/abs/2402.03110"
+  publisher:
+    name: "arXiv"
