@@ -6,10 +6,10 @@ class Environment:
         self.noise_std = params["noise_std"] # std on the latent state
         self.gamma_0 = params["gamma_0"]
         self.gammas = np.array(params["gammas"]) # gammas in the sum, size: (K, 1)
-        self.beta_0 = params["beta_0"] # size: (num_actions, 1)
-        self.beta_1 = params["beta_1"] # size: (num_actions, 1)
+        self.mu_a = params["mu_a"] # size: (num_actions, 1)
+        self.beta_a = params["beta_a"] # size: (num_actions, 1)
         self.init_zs = params["init_zs"]
-        self.num_actions = len(self.beta_0)
+        self.num_actions = len(self.mu_a)
         self.T = T # num. time-steps
         self.t = 0 # current time-step
         self.zs = np.concatenate((self.init_zs, np.empty(T - self.K, dtype=np.float64)), axis=None)
@@ -23,8 +23,8 @@ class Environment:
         self.t += 1
 
     def state_evolution(self):
-        # order goes from t - k to t - 1
-        dot_prod = self.gammas @ np.array(self.get_recent_zs())
+        # order goes from t - 1 to t - k / from gamma_1 to gamma_k
+        dot_prod = self.gammas @ np.flip(np.array(self.get_recent_zs()))
         z_noise = np.random.normal(0, self.noise_std)
         t = self.get_t()
         self.z_noises[t] = z_noise
@@ -36,12 +36,12 @@ class Environment:
         z_t = self.zs[t]
         reward_noise = np.random.normal(0, 0.1)
         self.reward_noises[t] = reward_noise
-        return self.beta_0[action] + self.beta_1[action] * z_t + reward_noise
+        return self.mu_a[action] + self.beta_a[action] * z_t + reward_noise
     
     # for sanity checking performance of oracle
     def get_noiseless_reward(self, action, t):
         z_t = self.zs[t]
-        return self.beta_0[action] + self.beta_1[action] * z_t
+        return self.mu_a[action] + self.beta_a[action] * z_t
     
     def get_reward_noise(self, t):
         return self.reward_noises[t]

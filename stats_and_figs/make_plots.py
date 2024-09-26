@@ -10,8 +10,8 @@ sys.path.append(
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 T = NUM_TIME_STEPS
-EXP_ROOT_FOLDER = "../experiment_results/known_k/"
-OUTPUT_FOLDER = "known_k/"
+EXP_ROOT_FOLDER = "../experiment_results/fixed_s/"
+OUTPUT_FOLDER = "fixed_s/"
 RESULTS_FILE = "/results_{}.json"
 GROUND_TRUTH_FILE = "/ground_truth_{}.json"
 EXP_PATTERN = re.compile(r'K:(\d+)_noise_std:(\d+(\.\d+)?)')
@@ -50,7 +50,7 @@ def get_exp_results_for_single_trial(exp_data, ground_truth):
 plt.rcParams.update({
     "text.usetex": True
 })
-# avg_rewards should be of shape ANNA TODO
+# avg_rewards should be of shape (NUM_TRIALS, NUM_AGENTS, NUM_TIME_STEPS)
 def create_and_save_reward_fig(agent_names, avg_rewards, k, sigma_std, exp_name):
     plt.figure(figsize=(8, 6))
     k = int(k)
@@ -83,10 +83,9 @@ def create_and_save_regret_fig(agent_names, avg_rewards, k, sigma_std, exp_name)
         lower_ci = regret_value + 1.0 * np.std(avg_rewards[:,i], axis=0)[k:]
         upper_ci = regret_value - 1.0 * np.std(avg_rewards[:,i], axis=0)[k:]
         plt.fill_between(range(k, T), lower_ci, upper_ci, alpha=0.2)
-    plt.plot(range(k, T), np.mean(avg_rewards[:,-1] - avg_rewards[:,-1], axis=0)[k:], label='oracle')
-    plt.title(f"Cumulative Regret Over Time for \n $k = {k}$, $\sigma_z = {sigma_std}$", fontsize=25)
+    plt.title(f"$k = {k}$, $\sigma_z = {sigma_std}$", fontsize=25)
     plt.xlabel("Time-Step", fontsize=20)
-    plt.ylabel("Regret", fontsize=20)
+    plt.ylabel("Cumulative Regret", fontsize=20)
     plt.grid(True)
     plt.legend(fontsize=16, loc='best')
     plt.savefig(OUTPUT_FOLDER + f"{exp_name}_cumm_regret_plot.pdf", format='pdf', bbox_inches='tight')
@@ -111,7 +110,7 @@ def get_all_exp_results(parent_folder):
         print(f"Making reward graph")
         create_and_save_reward_fig(agents, exp_reward_metrics, k, sigma_std, exp)
         print(f"Making regret graph")
-        create_and_save_regret_fig(agents[:-1], exp_reward_metrics[:, :-1, :], k, sigma_std, exp)
+        create_and_save_regret_fig(agents, exp_reward_metrics, k, sigma_std, exp)
 
 if not os.path.exists(OUTPUT_FOLDER):
     os.makedirs(OUTPUT_FOLDER)

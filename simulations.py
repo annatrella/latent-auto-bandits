@@ -1,7 +1,5 @@
-from environment import *
 import numpy as np
 import json
-import os
 from scipy.stats import bernoulli
 
 ### AGENT PARAMS ###
@@ -9,10 +7,10 @@ from scipy.stats import bernoulli
 def run_simulation(env, agent, seed):
     np.random.seed(seed)
     T = env.get_T()
-    K = max(agent.k, env.K)
+    K = env.K
     actions = np.empty(T)
     rewards = np.empty(T)
-    action_states = np.empty((T, env.get_num_actions(), env.get_num_actions() * agent.get_state_dim()))
+    states = np.empty((T, agent.get_state_dim()))
     # initializing the first K values
     for _ in range(K):
         t = env.get_t()
@@ -26,17 +24,17 @@ def run_simulation(env, agent, seed):
         # print(f"Time Step: {t}")
         env.state_evolution()
         ### action selection ###
-        action_states[t] = agent.process_states(env, actions, rewards)
-        actions[t] = agent.select_action(action_states[t])
+        states[t] = agent.process_state(env, actions, rewards)
+        actions[t] = agent.select_action(env, states[t])
         ### produce reward ###
         rewards[t] = env.get_reward(int(actions[t]))
         ### update ###
         # we do not update with first K time-steps
-        agent.update(actions, rewards, action_states, t)
+        agent.update(actions, rewards, states, t)
         ### increment t ###  
         env.increment_t()
     
-    return actions, rewards
+    return actions, rewards, states
 
 def calculate_ground_truth(env, seed):
     np.random.seed(seed)

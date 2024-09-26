@@ -1,6 +1,9 @@
-from simulations import *
+import os
+import numpy as np
+from environment import Environment
+from simulations import run_simulation, calculate_ground_truth, save_to_json
 from generate_valid_env import generate_centered_stable_weights
-from ucb_agents import StationaryAgent, NonStatRLS, NonStatOracleAlt
+from ucb_agents import StationaryAgent, LatentARLinUCB, IntermediateAgent
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 import itertools
@@ -18,12 +21,12 @@ for k in Ks:
     GAMMAS.append(gammas)
 
 PARAMS = dict(gamma_0=[0],
-        beta_0=[[0,0]],
-        beta_1=[[-100.0, 100.0]],
+        mu_a=[[0,0]],
+        beta_a=[[-100.0, 100.0]],
         noise_std=[1e-3, 1, 10],
         k_index=[i for i in range(len(Ks))]
         )
-DICT_KEYS = ['gamma_0', 'beta_0', 'beta_1', 'noise_std', 'K', 'gammas', 'init_zs']
+DICT_KEYS = ['gamma_0', 'mu_a', 'beta_a', 'noise_std', 'K', 'gammas', 'init_zs']
 OUTPUT_PATH_NAMES = ['K', 'noise_std']
 EXPERIMENTS = {}
 
@@ -37,12 +40,14 @@ for vals in itertools.product(*list(PARAMS.values())):
     EXPERIMENTS[exp_name] = exp_kwargs
 
 LAMBDA_REG = 0.1
-STAT_AGENT = lambda k, env_params: StationaryAgent(k)
-OUR_ALGORITHM = lambda k, env_params: NonStatRLS(2 * 2 * k + 1)
-NON_STAT_ORACLE = lambda k, env_params: NonStatOracleAlt(env_params, 2 * 2 * k + 1)
+STAT_AGENT = StationaryAgent()
+OUR_ALGORITHM = lambda s, env_params: LatentARLinUCB(s)
+INTERMEDIATE_AGENT = lambda s, env_params: IntermediateAgent(env_params, s)
 
-AGENTS = [STAT_AGENT, OUR_ALGORITHM, NON_STAT_ORACLE]
-AGENT_NAMES = ['stationary', 'ours', 'oracle']
+AGENTS = [STAT_AGENT, OUR_ALGORITHM(1, None), OUR_ALGORITHM(2, None), OUR_ALGORITHM(5, None), OUR_ALGORITHM(10, None)]
+AGENT_NAMES = ['stationary', 'ours']
+# AGENTS = [STAT_AGENT, OUR_ALGORITHM, INTERMEDIATE_AGENT]
+# AGENT_NAMES = ['stationary', 'ours', 'intermediate']
 
 def run_experiment(exp_name, env_params, agents):
     for exp_seed in range(0, MAX_SEED):
@@ -51,13 +56,13 @@ def run_experiment(exp_name, env_params, agents):
         env_params['init_zs'] = np.random.randn(env_params['K'])
         ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), exp_seed)
         for agent in agents:
-            agent = agent(env_params['K'], env_params)
-            actions, rewards = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
-            RESULTS[agent.name] = {
+            actions, rewards, _ = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
+            key_name = agent.name if agent.name == 'Stationary' else f"{agent.name} s={agent.s}"
+            RESULTS[key_name] = {
                 "actions": actions,
                 "rewards": rewards
             }
-        directory = f"experiment_results/known_k/{exp_name}"
+        directory = f"experiment_results/fixed_s/{exp_name}"
         if not os.path.exists(directory):
             os.makedirs(directory)
 
