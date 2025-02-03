@@ -8,13 +8,14 @@ def run_simulation(env, agent, seed):
     np.random.seed(seed)
     T = env.get_T()
     K = env.K
-    actions = np.empty(T)
-    rewards = np.empty(T)
-    states = np.empty((T, agent.get_state_dim()))
+    actions = np.zeros(T)
+    rewards = np.zeros(T)
+    states = np.zeros((T, agent.get_state_dim()))
     # initializing the first K values
     for _ in range(K):
         t = env.get_t()
-        actions[t] = bernoulli.rvs(0.5)
+        states[t] = agent.process_state(env, actions, rewards)
+        actions[t] = agent.select_action(env, states[t])
         rewards[t] = env.get_reward(int(actions[t]))
         env.increment_t()
 
@@ -42,12 +43,12 @@ def calculate_ground_truth(env, seed):
     K = env.K
     ground_truth = {
         "k": env.K,
-        "noise_std": env.noise_std, 
-        "mean reward 1": np.empty(T),
-        "mean reward 0": np.empty(T),
-        "optimal action": np.empty(T),
-        "optimal reward": np.empty(T),
-        "zs": np.empty(T)
+        "sigma_z": env.sigma_z, 
+        "mean reward 1": np.zeros(T),
+        "mean reward 0": np.zeros(T),
+        "optimal action": np.zeros(T),
+        "optimal reward": np.zeros(T),
+        "zs": np.zeros(T)
     }
     for _ in range(K):
         t = env.get_t()

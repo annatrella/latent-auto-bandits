@@ -32,7 +32,7 @@ def generate_centered_stable_weights(order, range_factor, seed):
 # INIT_ZS = np.ones(K)
 # no_noise_env_params = {
 #     "K": K,
-#     "noise_std": 0,
+#     "sigma_z": 0,
 #     "gamma_0": 0,
 #     "gammas": gammas,
 #     "beta_0": [0, 0],
@@ -42,7 +42,7 @@ def generate_centered_stable_weights(order, range_factor, seed):
 # }
 # low_noise_env_params = {
 #     "K": K,
-#     "noise_std": 1,
+#     "sigma_z": 1,
 #     "gamma_0": 0,
 #     "gammas": gammas,
 #     "beta_0": [0, 0],
@@ -51,7 +51,7 @@ def generate_centered_stable_weights(order, range_factor, seed):
 # }
 # high_noise_env_params = {
 #     "K": K,
-#     "noise_std": 5,
+#     "sigma_z": 5,
 #     "gamma_0": 0,
 #     "gammas": gammas,
 #     "beta_0": [0, 0],

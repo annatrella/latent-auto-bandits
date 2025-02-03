@@ -5,11 +5,11 @@ from sklearn.model_selection import train_test_split
 from rls import fit_rls
 
 # Function to simulate toy data
-def generate_toy_data(n_samples=100, n_features=5, noise_std=0.1):
+def generate_toy_data(n_samples=100, n_features=5, sigma_z=0.1):
     np.random.seed(42)
     X = np.random.rand(n_samples, n_features)
     true_coefficients = np.random.randn(n_features)
-    y = X.dot(true_coefficients) + np.random.normal(0, noise_std, n_samples)
+    y = X.dot(true_coefficients) + np.random.normal(0, sigma_z, n_samples)
     return X, y, true_coefficients
 
 # Function to fit Ridge regression model

@@ -22,12 +22,13 @@ for k in Ks:
 
 PARAMS = dict(gamma_0=[0],
         mu_a=[[0,0]],
-        beta_a=[[-100.0, 100.0]],
-        noise_std=[1e-3, 1, 10],
+        beta_a=[[-10.0, 10.0]],
+        sigma_z=[1e-3, 1, 10],
+        sigma_r=[1e-3, 1, 10],
         k_index=[i for i in range(len(Ks))]
         )
-DICT_KEYS = ['gamma_0', 'mu_a', 'beta_a', 'noise_std', 'K', 'gammas', 'init_zs']
-OUTPUT_PATH_NAMES = ['K', 'noise_std']
+DICT_KEYS = ['gamma_0', 'mu_a', 'beta_a', 'sigma_z', 'sigma_r', 'K', 'gammas', 'init_zs']
+OUTPUT_PATH_NAMES = ['K', 'sigma_z', 'sigma_r']
 EXPERIMENTS = {}
 
 for vals in itertools.product(*list(PARAMS.values())):
@@ -39,25 +40,16 @@ for vals in itertools.product(*list(PARAMS.values())):
     exp_name = "_".join([f"{key}:{exp_kwargs[key]}" for key in OUTPUT_PATH_NAMES])
     EXPERIMENTS[exp_name] = exp_kwargs
 
-LAMBDA_REG = 0.1
-STAT_AGENT = StationaryAgent()
-OUR_ALGORITHM = lambda s, env_params: LatentARLinUCB(s)
-INTERMEDIATE_AGENT = lambda s, env_params: IntermediateAgent(env_params, s)
-
-AGENTS = [STAT_AGENT, OUR_ALGORITHM(1, None), OUR_ALGORITHM(2, None), OUR_ALGORITHM(5, None), OUR_ALGORITHM(10, None)]
-AGENT_NAMES = ['stationary', 'ours']
-# AGENTS = [STAT_AGENT, OUR_ALGORITHM, INTERMEDIATE_AGENT]
-# AGENT_NAMES = ['stationary', 'ours', 'intermediate']
-
 def run_experiment(exp_name, env_params, agents):
     for exp_seed in range(0, MAX_SEED):
         RESULTS = {}
         # we draw new init z's every seed
-        env_params['init_zs'] = np.random.randn(env_params['K'])
+        env_params['init_zs'] = 10 * np.random.randn(env_params['K'])
+        agents += [INTERMEDIATE_AGENT(0, env_params)]
         ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), exp_seed)
         for agent in agents:
             actions, rewards, _ = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
-            key_name = agent.name if agent.name == 'Stationary' else f"{agent.name} s={agent.s}"
+            key_name = f"{agent.name} s={agent.s}" if agent.name == 'Latent AR LinUCB' else agent.name
             RESULTS[key_name] = {
                 "actions": actions,
                 "rewards": rewards
@@ -71,4 +63,12 @@ def run_experiment(exp_name, env_params, agents):
 
 for name, env_params in EXPERIMENTS.items():
     print(f"Starting experiment: {name}")
+    STAT_AGENT = StationaryAgent()
+    OUR_ALGORITHM = lambda s, env_params: LatentARLinUCB(s)
+    INTERMEDIATE_AGENT = lambda s, env_params: IntermediateAgent(env_params, s)
+
+    # AGENTS = [STAT_AGENT, OUR_ALGORITHM(1, None), OUR_ALGORITHM(2, None), OUR_ALGORITHM(5, None), OUR_ALGORITHM(10, None)]
+    AGENTS = [STAT_AGENT, OUR_ALGORITHM(2, None)]
+    AGENT_NAMES = ['stationary', 'ours', 'intermediate']
+    
     run_experiment(name, env_params, AGENTS)
