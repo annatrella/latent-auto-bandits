@@ -19,6 +19,8 @@ def create_Gamma_from_gammas(gammas):
         Gamma.append(bases[j])
     return np.array(Gamma).reshape(k, k)
 
+# ref: steady-state Kalman Filter 
+# https://laurentlessard.com/teaching/me7247/lectures/lecture%2012%20-%20steady-state%20Kalman%20filter.pdf
 def compute_K(P, C, V):
     return P @ C.T @ np.linalg.inv(C @ P @ C.T + V)
 

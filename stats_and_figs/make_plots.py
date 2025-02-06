@@ -10,8 +10,8 @@ sys.path.append(
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 T = NUM_TIME_STEPS
-EXP_ROOT_FOLDER = "../experiment_results/fixed_s/"
-OUTPUT_FOLDER = "fixed_s/"
+EXP_ROOT_FOLDER = "../experiment_results/optimal_s/"
+OUTPUT_FOLDER = "optimal_s/"
 RESULTS_FILE = "/results_{}.json"
 GROUND_TRUTH_FILE = "/ground_truth_{}.json"
 
@@ -116,11 +116,12 @@ def get_all_exp_results(parent_folder):
             exp_reward_metrics[exp_seed] = get_exp_results_for_single_trial(exp_data, ground_truth)
 
         print(f"Saving Results for Exp: {exp}")
-        # print(f"Making reward graph")
-        # create_and_save_reward_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
+        print(f"Making reward graph")
+        create_and_save_reward_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
         print(f"Making regret graph")
         create_and_save_regret_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
 
 if not os.path.exists(OUTPUT_FOLDER):
-    os.makedirs(OUTPUT_FOLDER)
+    os.makedirs(OUTPUT_FOLDER + "rewards/")
+    os.makedirs(OUTPUT_FOLDER + "regret/")
 get_all_exp_results(EXP_ROOT_FOLDER)
