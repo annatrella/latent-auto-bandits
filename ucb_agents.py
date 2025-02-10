@@ -16,6 +16,7 @@ class UCBAgent:
         self.Vs = [self.lambda_reg * np.eye(self.state_dim, dtype=np.float64) for _ in range(self.num_actions)]
         self.bs = [np.zeros(self.state_dim, dtype=np.float64) for _ in range(self.num_actions)]
         self.theta_hats = [np.linalg.inv(self.Vs[i]) @ self.bs[i] for i in range(self.num_actions)]
+        self.reward_means = []
 
     def process_state(self, env, actions, rewards):
         return None
@@ -27,7 +28,7 @@ class UCBAgent:
                      for V in self.Vs]
         optimistic_estimates = [np.dot(theta_hat.T, state) + optimism_value
                                 for theta_hat, optimism_value in zip(self.theta_hats, optimism)]
-
+        self.reward_means.append(optimistic_estimates)
         # Choose the arm with the maximum optimistic estimate
         chosen_action = np.argmax(optimistic_estimates)
         return chosen_action
@@ -42,14 +43,14 @@ class UCBAgent:
     def get_state_dim(self):
         return self.state_dim
     
-    def get_theta_hat(self):
-        return self.theta_hat
+    def get_theta_hats(self):
+        return self.theta_hats
     
-    def get_V(self):
-        return self.V
+    def get_Vs(self):
+        return self.Vs
     
-    def set_theta_hat(self, theta_hat):
-        self.theta_hat = theta_hat
+    def set_theta_hats(self, theta_hats):
+        self.theta_hats = theta_hats
     
 ### Helpers ###
     
@@ -93,6 +94,10 @@ class LatentARLinUCB(UCBAgent):
             return np.random.choice(range(self.num_actions))
         else:
             return super().select_action(env, state)
+        
+    def update(self, actions, rewards, states, t):
+        if t >= self.s:
+            super().update(actions, rewards, states, t)
 
 ### Intermediate agent that knows the ground-truth parameters and runs a standard Kalman filter
 ### but does not get observations of the latent process 
@@ -117,6 +122,8 @@ class IntermediateAgent(UCBAgent):
         # z_tilde_t = [\tilde{z}_t \tilde{z}_{t - 1} ... \tilde{z}_{t - k}]
         self.z_tildes = [np.flip(env_params['init_zs'])] * self.k
         self.observations = []
+        # for debugging
+        self.reward_means = []
 
     def process_state(self, env, actions, rewards):
         t = env.get_t()
@@ -139,8 +146,8 @@ class IntermediateAgent(UCBAgent):
             z_t_tilde = compute_z_tilde(self.Gamma, self.Kalman_Gain, self.C, last_z_tilde, self.mu_z, [last_y])
             self.z_tildes.append(z_t_tilde)
         mean_rewards = [c_a.T @ z_t_tilde + mu_a for c_a, mu_a in zip(self.c_a, self.mu_a)]
+        self.reward_means.append(mean_rewards)
         chosen_arm = np.argmax(mean_rewards)
-        # print(f"t: {t}, z_tilde {z_t_tilde[0]}, true_z {env.zs[t]}, chosen arm {chosen_arm}")
 
         return chosen_arm
     
