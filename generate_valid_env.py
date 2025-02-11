@@ -1,15 +1,10 @@
 import numpy as np
 from simulations import *
+from environment import Environment
 
 def generate_centered_stable_weights(order, range_factor, seed):
     np.random.seed(seed)
-    # Generate random weights within a specified range
-    weights = np.random.uniform(low=-1 * range_factor, high=range_factor, size=order)
-    
-    # Ensure centering by adjusting the weights
-    weights = weights - np.mean(weights)
-    weights = weights / np.sum(np.abs(weights))
-    weights = np.array([ 0.34175598,  1.87617084,  0.95042384, -0.57690366, -0.89841467])
+    weights = np.array([0.34175598,  1.87617084,  0.95042384, -0.57690366, -0.89841467])
     
     # Ensure stability by checking if the roots are inside the unit circle
     while np.max(np.abs(np.roots([1] + list(-weights)))) >= 1:
@@ -22,8 +17,6 @@ def generate_centered_stable_weights(order, range_factor, seed):
 ### TRUE ENV. PARAMS ###
 # K = 5
 # NUM_TIME_STEPS = 100
-# K = 1
-# gammas = [0.9]
 # INIT_ZS = [1]
 # gammas = generate_centered_stable_weights(K, 2, 123)
 # print("GAMMAS", gammas)  
@@ -33,29 +26,32 @@ def generate_centered_stable_weights(order, range_factor, seed):
 # no_noise_env_params = {
 #     "K": K,
 #     "sigma_z": 0,
+#     "sigma_r": 1,
 #     "gamma_0": 0,
 #     "gammas": gammas,
-#     "beta_0": [0, 0],
-#     "beta_1": [-1.0, 1.0],
+#     "mu_a": [0, 0],
+#     "beta_a": [-1.0, 1.0],
 #     "init_zs": INIT_ZS
 #     # "init_zs": np.zeros(K)
 # }
 # low_noise_env_params = {
 #     "K": K,
 #     "sigma_z": 1,
+#     "sigma_r": 1,
 #     "gamma_0": 0,
 #     "gammas": gammas,
-#     "beta_0": [0, 0],
-#     "beta_1": [-1.0, 1.0],
+#     "mu_a": [0, 0],
+#     "beta_a": [-1.0, 1.0],
 #     "init_zs": INIT_ZS
 # }
 # high_noise_env_params = {
 #     "K": K,
 #     "sigma_z": 5,
+#     "sigma_r": 1,
 #     "gamma_0": 0,
 #     "gammas": gammas,
-#     "beta_0": [0, 0],
-#     "beta_1": [-1.0, 1.0],
+#     "mu_a": [0, 0],
+#     "beta_a": [-1.0, 1.0],
 #     "init_zs": INIT_ZS
 # }
 

@@ -99,11 +99,11 @@ class LatentARLinUCB(UCBAgent):
         if t >= self.s:
             super().update(actions, rewards, states, t)
 
-### Intermediate agent that knows the ground-truth parameters and runs a standard Kalman filter
+### KalmanFilter agent that knows the ground-truth parameters and runs a standard Kalman filter
 ### but does not get observations of the latent process 
-class IntermediateAgent(UCBAgent):
+class KalmanFilterAgent(UCBAgent):
     def __init__(self, env_params, s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=2):
-        super().__init__("Intermediate", 2 * s * num_actions + 1, alpha, lambda_reg, num_actions)
+        super().__init__(r"Kalman Filter w/ $\theta^*$", 2 * s * num_actions + 1, alpha, lambda_reg, num_actions)
         self.s = s
         self.k = env_params["K"]
         # order goes from gamma_1 to gamma_k
