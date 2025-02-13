@@ -10,8 +10,8 @@ sys.path.append(
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 T = NUM_TIME_STEPS
-EXP_ROOT_FOLDER = "../experiment_results/fixed_s/"
-OUTPUT_FOLDER = "fixed_s/"
+EXP_ROOT_FOLDER = "../experiment_results/varying_s/"
+OUTPUT_FOLDER = "varying_s/"
 RESULTS_FILE = "/results_{}.json"
 GROUND_TRUTH_FILE = "/ground_truth_{}.json"
 

@@ -9,7 +9,7 @@ from global_params import MAX_SEED, NUM_TIME_STEPS
 import itertools
 
 ### TRUE ENV. PARAMS ###
-Ks = [10]
+Ks = [1, 5, 10]
 GAMMAS = []
 for k in Ks:
     if k == 1:
@@ -64,12 +64,12 @@ def run_experiment(exp_name, env_name, env_params, agents):
 for env_name, env_params in EXPERIMENTS.items():
     # READ ME: to run a different experiment, please first chage exp_name and then 
     # modify the agents, environment, etc.
-    exp_name = "fixed_s"
+    exp_name = "varying_s"
     print(f"Starting experiment: {exp_name} {env_name}")
     STAT_AGENT = StationaryAgent()
     OUR_ALGORITHM = lambda s, env_params: LatentARLinUCB(s)
     KALMAN_FILTER_AGENT = lambda s, env_params: KalmanFilterAgent(env_params, s)
 
-    AGENTS = [STAT_AGENT, OUR_ALGORITHM(10, None)]
+    AGENTS = [STAT_AGENT, OUR_ALGORITHM(1, None), OUR_ALGORITHM(5, None), OUR_ALGORITHM(10, None), OUR_ALGORITHM(15, None)]
     
     run_experiment(exp_name, env_name, env_params, AGENTS)
