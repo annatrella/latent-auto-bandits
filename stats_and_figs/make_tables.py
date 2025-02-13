@@ -90,7 +90,7 @@ def grid_to_latex(matrix, agent_names, title):
 def create_pairwise_table(agent_names, total_regrets, k, sigma_z, sigma_r):
     plt.figure(figsize=(8, 6))
     k = int(k)
-    n = len(agent_names[:-1])
+    n = len(agent_names)
     max_seed = len(total_regrets)
     grid = np.zeros((n, n))
     row_averages = np.zeros(n)
@@ -102,7 +102,7 @@ def create_pairwise_table(agent_names, total_regrets, k, sigma_z, sigma_r):
                 total_sum += grid[i, j]
         row_averages[i] = round(total_sum / (n - 1), 2)
     grid = np.hstack((grid, row_averages.reshape(-1, 1)))
-    print(grid_to_latex(grid, agent_names[:-1], f"$k = {k}$, $\sigma_z = {sigma_z}$, $\sigma_r = {sigma_r}$"))
+    print(grid_to_latex(grid, agent_names, f"$k = {k}$, $\sigma_z = {sigma_z}$, $\sigma_r = {sigma_r}$"))
 
 def get_all_exp_results(parent_folder):
     subfolder = list_subfolders(parent_folder)

@@ -45,7 +45,7 @@ def run_experiment(exp_name, env_name, env_params, agents):
         RESULTS = {}
         # we draw new init z's every seed
         env_params['init_zs'] = 10 * np.random.randn(env_params['K'])
-        agents += [KALMAN_FILTER_AGENT(0, env_params)]
+        # agents += [KALMAN_FILTER_AGENT(0, env_params)]
         ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), exp_seed)
         for agent in agents:
             actions, rewards, _ = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
