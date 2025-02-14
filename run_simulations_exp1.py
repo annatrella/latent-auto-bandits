@@ -3,7 +3,7 @@ import numpy as np
 from environment import Environment
 from simulations import run_simulation, calculate_ground_truth, save_to_json
 from generate_valid_env import generate_centered_stable_weights
-from ucb_agents import StationaryAgent, LatentARLinUCB, KalmanFilterAgent
+from ucb_agents import StationaryAgent, LatentARLinUCB
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 import itertools
@@ -45,11 +45,10 @@ def run_experiment(exp_name, env_name, env_params, agents):
         RESULTS = {}
         # we draw new init z's every seed
         env_params['init_zs'] = 10 * np.random.randn(env_params['K'])
-        # agents += [KALMAN_FILTER_AGENT(0, env_params)]
         ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), exp_seed)
         for agent in agents:
             actions, rewards, _ = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
-            key_name = f"{agent.name} s={agent.s}" if agent.name == 'Latent AR LinUCB' else agent.name
+            key_name = f"{agent.name} s={agent.s}" if agent.name == 'LARL' else agent.name
             RESULTS[key_name] = {
                 "actions": actions,
                 "rewards": rewards
@@ -67,9 +66,8 @@ for env_name, env_params in EXPERIMENTS.items():
     exp_name = "varying_s"
     print(f"Starting experiment: {exp_name} {env_name}")
     STAT_AGENT = StationaryAgent()
-    OUR_ALGORITHM = lambda s, env_params: LatentARLinUCB(s)
-    KALMAN_FILTER_AGENT = lambda s, env_params: KalmanFilterAgent(env_params, s)
+    OUR_ALGORITHM = lambda s: LatentARLinUCB(s)
 
-    AGENTS = [STAT_AGENT, OUR_ALGORITHM(1, None), OUR_ALGORITHM(5, None), OUR_ALGORITHM(10, None), OUR_ALGORITHM(15, None)]
+    AGENTS = [STAT_AGENT, OUR_ALGORITHM(1), OUR_ALGORITHM(5), OUR_ALGORITHM(10), OUR_ALGORITHM(15)]
     
     run_experiment(exp_name, env_name, env_params, AGENTS)

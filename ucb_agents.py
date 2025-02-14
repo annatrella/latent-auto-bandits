@@ -68,10 +68,29 @@ class StationaryAgent(UCBAgent):
             return np.random.choice(range(self.num_actions))
         else:
             return super().select_action(env, state)
+        
+class ARUCB(UCBAgent):
+    def __init__(self, s, num_actions=2):
+        super().__init__("AR UCB", s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=num_actions)
+        self.s = s
+
+    def process_state(self, env, actions, rewards):
+        t = env.get_t()
+        if t < self.s:
+            return None
+        return np.array(rewards[t - self.s:t])
+        
+    def select_action(self, env, state):
+        t = env.get_t()
+        if t < env.get_k():
+            return np.random.choice(range(self.num_actions))
+        else:
+            return super().select_action(env, state)
+
     
 class LatentARLinUCB(UCBAgent):
     def __init__(self, s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=2):
-        super().__init__("Latent AR LinUCB", 2 * s * num_actions + 1, alpha, lambda_reg, num_actions)
+        super().__init__("LARL", 2 * s * num_actions + 1, alpha, lambda_reg, num_actions)
         self.s = s 
         self.bases = np.eye(num_actions).tolist()
 
