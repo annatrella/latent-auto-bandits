@@ -3,7 +3,7 @@ import numpy as np
 from environment import Environment
 from simulations import run_simulation, calculate_ground_truth, save_to_json
 from generate_valid_env import generate_centered_stable_weights
-from ucb_agents import StationaryAgent, LatentARLinUCB, ARUCB
+from ucb_agents import StationaryAgent, LatentARLinUCB, ARUCB, SWUCB
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 import itertools
@@ -49,8 +49,7 @@ def run_experiment(exp_name, env_name, env_params, agents):
         ground_truth = calculate_ground_truth(Environment(env_params, T=NUM_TIME_STEPS), exp_seed)
         for agent in agents:
             actions, rewards, _ = run_simulation(Environment(env_params, T=NUM_TIME_STEPS), agent, exp_seed)
-            key_name = f"{agent.name} s={agent.s}" if agent.name == 'Latent AR LinUCB' else agent.name
-            RESULTS[key_name] = {
+            RESULTS[agent.name] = {
                 "actions": actions,
                 "rewards": rewards
             }
@@ -70,6 +69,6 @@ for env_name, env_params in EXPERIMENTS.items():
     OUR_ALGORITHM = lambda s: LatentARLinUCB(s)
     ARUCB_AGENT = lambda s: ARUCB(s)
 
-    AGENTS = [STAT_AGENT, OUR_ALGORITHM(env_params['K']), ARUCB_AGENT(env_params['K'])]
+    AGENTS = [STAT_AGENT, OUR_ALGORITHM(env_params['K']), ARUCB_AGENT(env_params['K']), SWUCB(env_params['K'])]
     
     run_experiment(exp_name, env_name, env_params, AGENTS)

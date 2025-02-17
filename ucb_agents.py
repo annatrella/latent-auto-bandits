@@ -68,7 +68,8 @@ class StationaryAgent(UCBAgent):
             return np.random.choice(range(self.num_actions))
         else:
             return super().select_action(env, state)
-        
+
+### Stationary AR Bandit (Bacchiocchi et. al, 2022) ###        
 class ARUCB(UCBAgent):
     def __init__(self, s, num_actions=2):
         super().__init__("AR UCB", s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=num_actions)
@@ -175,13 +176,31 @@ class KalmanFilterAgent(UCBAgent):
     def update(self, actions, rewards, states, t):
 
         return None
+    
+### Sliding Window UCB (Garivier & Moulines, 2008) ###
+# uses a sliding window approach of size tau = k
+# code adapted from: https://github.com/MaxenceGiraud/ucb-nonstationary/blob/main/nsucb/sliding_ucb.py
+class SWUCB(UCBAgent):
+    def __init__(self, k, num_actions=2):
+        super().__init__("SW UCB", 1, ALPHA, LAMBDA_REG, num_actions)
+        self.tau = k
+        self.B = 100 # upper bound on rewards
+        self.xi = 0.5 # original authors set 0.5 for simulations
+        self.optimism_values = np.zeros(self.num_actions)
 
-class UniformRandom(LatentARLinUCB):
-    def __init__(self, state_dim, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=2):
-        super().__init__(state_dim, alpha, lambda_reg, num_actions)
-
+    def process_states(self, env, actions, rewards):
+        return np.ones(1)
+    
     def select_action(self, env, state):
-        return np.random.choice([0, 1], size=1, p=[0.5, 0.5])
+        t = env.get_t()
+        if t < self.tau:
+            return np.random.choice(range(self.num_actions))
+        else:
+            return np.argmax([optimism_a for optimism_a in self.optimism_values])
     
     def update(self, actions, rewards, states, t):
-        return None
+        for i in range(self.num_actions):
+            N = np.sum(actions[-self.tau:])
+            X = (1 / N) * np.sum(rewards[-self.tau:])
+            c = self.B * np.sqrt((self.xi * np.log(max(t, self.tau))) / N)
+            self.optimism_values[i] = X + c
