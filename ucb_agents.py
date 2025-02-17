@@ -178,8 +178,8 @@ class KalmanFilterAgent(UCBAgent):
         return None
     
 ### Sliding Window UCB (Garivier & Moulines, 2008) ###
+# paper: https://arxiv.org/pdf/0805.3415
 # uses a sliding window approach of size tau = k
-# code adapted from: https://github.com/MaxenceGiraud/ucb-nonstationary/blob/main/nsucb/sliding_ucb.py
 class SWUCB(UCBAgent):
     def __init__(self, k, num_actions=2):
         super().__init__("SW UCB", 1, ALPHA, LAMBDA_REG, num_actions)
@@ -193,14 +193,28 @@ class SWUCB(UCBAgent):
     
     def select_action(self, env, state):
         t = env.get_t()
-        if t < self.tau:
-            return np.random.choice(range(self.num_actions))
+        if t < self.num_actions:
+            return int(t)
         else:
             return np.argmax([optimism_a for optimism_a in self.optimism_values])
-    
+
+    def compute_X(self, rewards, actions, action, t, N):
+        X = 0
+        for s in range(t - self.tau, t):
+            X += rewards[s] * (actions[s] == action)
+        return X / N
+
+    def compute_N(self, discount_rate, actions, action, t):
+        N = 0
+        for s in range(t):
+            N += discount_rate**(t - s) * (actions[s] == action)
+        return N
+
     def update(self, actions, rewards, states, t):
+        if t < self.num_actions:
+            return
         for i in range(self.num_actions):
-            N = np.sum(actions[-self.tau:])
-            X = (1 / N) * np.sum(rewards[-self.tau:])
+            N = self.compute_N(self.tau, actions, i, t)
+            X = self.compute_X(rewards, actions, i, t, N)
             c = self.B * np.sqrt((self.xi * np.log(max(t, self.tau))) / N)
             self.optimism_values[i] = X + c

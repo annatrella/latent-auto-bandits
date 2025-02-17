@@ -4,6 +4,7 @@ from environment import Environment
 from simulations import run_simulation, calculate_ground_truth, save_to_json
 from generate_valid_env import generate_centered_stable_weights
 from ucb_agents import StationaryAgent, LatentARLinUCB, ARUCB, SWUCB
+from baseline_non_stat_agents import Rexp3
 from global_params import MAX_SEED, NUM_TIME_STEPS
 
 import itertools
@@ -65,10 +66,7 @@ for env_name, env_params in EXPERIMENTS.items():
     # modify the agents, environment, etc.
     exp_name = "against_baselines"
     print(f"Starting experiment: {exp_name} {env_name}")
-    STAT_AGENT = StationaryAgent()
-    OUR_ALGORITHM = lambda s: LatentARLinUCB(s)
-    ARUCB_AGENT = lambda s: ARUCB(s)
 
-    AGENTS = [STAT_AGENT, OUR_ALGORITHM(env_params['K']), ARUCB_AGENT(env_params['K']), SWUCB(env_params['K'])]
+    AGENTS = [StationaryAgent(), LatentARLinUCB(env_params['K']), ARUCB(env_params['K']), SWUCB(env_params['K']), Rexp3(NUM_TIME_STEPS, NUM_TIME_STEPS)]
     
     run_experiment(exp_name, env_name, env_params, AGENTS)
