@@ -3,6 +3,8 @@ from simulations import *
 from environment import Environment
 
 def generate_centered_stable_weights(order, range_factor, seed):
+    if order == 1:
+        return [0.9]
     np.random.seed(seed)
     weights = np.array([0.34175598,  1.87617084,  0.95042384, -0.57690366, -0.89841467])
     

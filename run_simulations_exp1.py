@@ -12,11 +12,8 @@ import itertools
 Ks = [1, 5, 10]
 GAMMAS = []
 for k in Ks:
-    if k == 1:
-        gammas = [0.9]
-    else:
-        # need gammas to be between -1 and 1 or else things will blow up
-        gammas = generate_centered_stable_weights(k, 2, 123)
+    # need gammas to be between -1 and 1 or else things will blow up
+    gammas = generate_centered_stable_weights(k, 2, 123)
     print("GAMMAS", gammas)  
     GAMMAS.append(gammas)
 

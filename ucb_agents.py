@@ -1,5 +1,5 @@
 import numpy as np
-from rls import fit_rls
+from rls import fit_rls, batch_fit_rls
 from lds import create_lds_from_ar_process, compute_P, compute_K, compute_z_tilde
 
 LAMBDA_REG = 1.0
@@ -88,6 +88,12 @@ class ARUCB(UCBAgent):
         else:
             return super().select_action(env, state)
 
+def process_lar_state(actions, rewards, s, bases):
+    recent_actions = actions[-s:]
+    recent_rewards = rewards[-s:]
+    X_t = np.array([reward * np.array(bases[int(action)]) for reward, action in zip(recent_rewards, recent_actions)]).flatten()
+    A_t = np.array([bases[int(action)] for action in recent_actions]).flatten()
+    return np.concatenate([X_t, A_t, [1]])
     
 class LatentARLinUCB(UCBAgent):
     def __init__(self, s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=2):
@@ -118,6 +124,93 @@ class LatentARLinUCB(UCBAgent):
     def update(self, actions, rewards, states, t):
         if t >= self.s:
             super().update(actions, rewards, states, t)
+
+class LARL_ETC(LatentARLinUCB):
+    def __init__(self, explore_t, max_s, alpha=ALPHA, lambda_reg=LAMBDA_REG, num_actions=2):
+        super().__init__(max_s, alpha, lambda_reg, num_actions)
+        self.name = "LARL"
+        self.explore_t = explore_t
+        self.max_s = max_s
+
+    def compute_states(self, actions, rewards, s):
+        states = np.zeros((self.explore_t - s + 1, 2 * s * self.num_actions + 1))
+        for i, t in enumerate(range(s, self.explore_t + 1)):
+            states[i] = process_lar_state(actions[:t], rewards[:t], s, self.bases)
+        return states
+    
+    def compute_theta_hats(self, s_states, actions, rewards):
+        Vs, bs, theta_hats = [], [], []
+        for action in range(self.num_actions):
+            curr_states = s_states[np.where(actions == action)]
+            curr_reawrds = rewards[np.where(actions == action)]
+            V_t, b_t, theta_t = batch_fit_rls(curr_states, curr_reawrds, self.lambda_reg)
+            Vs.append(V_t)
+            bs.append(b_t)
+            theta_hats.append(theta_t)
+        return Vs, bs, theta_hats
+    
+    def get_reward_preds(self, s_states, actions, theta_hats):
+        preds = np.zeros(len(actions))
+        for i in range(len(preds)):
+            action = actions[i]
+            state = s_states[i]
+            preds[i] = theta_hats[int(action)] @ state
+        return preds
+
+    def calculate_bic(self, y, y_pred, s, num_actions):
+        residuals = y - y_pred
+        n = len(residuals)
+        num_params = 2 * s * num_actions + 1
+        residual_variance = np.mean(residuals**2)
+        # print(f"residual_variance: {residual_variance}")
+        bic = n * np.log(residual_variance) + num_params * np.log(n)
+        
+        return bic
+    
+    def process_state(self, env, actions, rewards):
+        t = env.get_t()
+        if t > self.explore_t:
+            actual_state = super().process_state(env, actions, rewards)
+            # need to add padding
+            return np.concatenate((actual_state.reshape(-1, 1), np.zeros(2 * self.max_s * self.num_actions - 2 * self.s * self.num_actions).reshape(-1, 1))).flatten()
+    
+    def select_action(self, env, state):
+        t = env.get_t()
+        if t < self.explore_t:
+            # return np.random.choice(range(self.num_actions))
+            return t % self.num_actions
+        else:
+            return super().select_action(env, state[:(2 * self.s * self.num_actions + 1)])
+        
+    def update(self, actions, rewards, states, t):
+        if t > self.explore_t:
+            super().update(actions, rewards, states[:,:(2 * self.s * self.num_actions + 1)], t)
+        elif t == self.explore_t:
+            bics = []
+            all_Vs = []
+            all_bs = []
+            all_theta_hats = []
+            # form the data set for each model
+            for s in range(1, self.max_s + 1):
+                s_states = self.compute_states(actions[:t + 1], rewards[:t + 1], s)
+                Vs, bs, theta_hats = self.compute_theta_hats(s_states, actions[s:t + 1], rewards[s:t + 1])
+                all_Vs.append(Vs)
+                all_bs.append(bs)
+                all_theta_hats.append(theta_hats)
+                # compute reward predictions
+                reward_preds = self.get_reward_preds(s_states, actions[s:t + 1], theta_hats)
+                # compute the BIC for each model
+                bics.append(self.calculate_bic(rewards[s:t + 1], reward_preds, s, self.num_actions))
+            # choose the model with the lowest BIC
+            best_idx = np.argmin(bics)
+            if best_idx != self.max_s - 1:
+                best_s = range(1, self.max_s + 1)[best_idx]
+                # set the model to be the chosen model
+                self.s = best_s
+                self.Vs = all_Vs[best_idx]
+                self.bs = all_bs[best_idx]
+                self.theta_hats = all_theta_hats[best_idx]
+            print(f"Chosen s: {self.s}")
 
 ### KalmanFilter agent that knows the ground-truth parameters and runs a standard Kalman filter
 ### but does not get observations of the latent process 
