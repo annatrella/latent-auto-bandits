@@ -124,8 +124,8 @@ def get_all_exp_results(parent_folder):
             exp_reward_metrics[exp_seed] = get_exp_results_for_single_trial(exp_data, ground_truth)
 
         print(f"Saving Results for Exp: {exp}")
-        print(f"Making reward graph")
-        create_and_save_reward_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
+        # print(f"Making reward graph")
+        # create_and_save_reward_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
         print(f"Making regret graph")
         create_and_save_regret_fig(agents, exp_reward_metrics, k, sigma_z, sigma_r, exp)
 

@@ -1,5 +1,6 @@
 import json
 import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
 import sys
 import os
@@ -86,7 +87,16 @@ def grid_to_latex(matrix, agent_names, title):
 
     return latex_code + latex_table
 
-### Note: assumes that the "Kalman Filter agent" is the last idx in agent_names and total_regrets ###
+def grid_to_heatmap(matrix, agent_names, title, exp_name):
+    heatmap = sns.heatmap(matrix[:,:len(agent_names)], annot=True, cmap='coolwarm', xticklabels=agent_names, yticklabels=agent_names, annot_kws={'size': 16})
+    colorbar = heatmap.collections[0].colorbar
+    colorbar.ax.tick_params(labelsize=16)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
+    plt.title(title, fontsize=20)
+    plt.savefig(OUTPUT_FOLDER + f"{exp_name}_pairwise_heatmap.pdf", format='pdf', bbox_inches='tight')
+    plt.close()
+
 def create_pairwise_table(agent_names, total_regrets, k, sigma_z, sigma_r):
     plt.figure(figsize=(8, 6))
     k = int(k)
@@ -97,12 +107,12 @@ def create_pairwise_table(agent_names, total_regrets, k, sigma_z, sigma_r):
     for i in range(n):
         total_sum = 0
         for j in range(n):
-            grid[i, j] = np.sum(total_regrets[:, i] < total_regrets[:, j]) / max_seed if i != j else -1
+            grid[i, j] = np.sum(total_regrets[:, i] < total_regrets[:, j]) / max_seed if i != j else 0
             if i != j:
                 total_sum += grid[i, j]
         row_averages[i] = round(total_sum / (n - 1), 2)
     grid = np.hstack((grid, row_averages.reshape(-1, 1)))
-    print(grid_to_latex(grid, agent_names, f"$k = {k}$, $\sigma_z = {sigma_z}$, $\sigma_r = {sigma_r}$"))
+    return grid
 
 def get_all_exp_results(parent_folder):
     subfolder = list_subfolders(parent_folder)
@@ -117,9 +127,9 @@ def get_all_exp_results(parent_folder):
             exp_data = open_json_file(subfolder_path + RESULTS_FILE.format(exp_seed))
             ground_truth = open_json_file(subfolder_path + GROUND_TRUTH_FILE.format(exp_seed))
             total_regrets[exp_seed] = get_exp_results_for_single_trial(exp_data, ground_truth)
-        create_pairwise_table(agents, total_regrets, k, sigma_z, sigma_r)
+        grid = create_pairwise_table(agents, total_regrets, k, sigma_z, sigma_r)
+        grid_to_heatmap(grid, agents, f"$k = {k}$, $\sigma_z = {sigma_z}$, $\sigma_r = {sigma_r}$", exp)
 
 if not os.path.exists(OUTPUT_FOLDER):
-    os.makedirs(OUTPUT_FOLDER + "reward_means/")
-    os.makedirs(OUTPUT_FOLDER + "regret/")
+    os.makedirs(OUTPUT_FOLDER)
 get_all_exp_results(EXP_ROOT_FOLDER)

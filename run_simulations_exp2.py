@@ -65,6 +65,6 @@ for env_name, env_params in EXPERIMENTS.items():
     exp_name = "against_baselines"
     print(f"Starting experiment: {exp_name} {env_name}")
 
-    AGENTS = [StationaryAgent(), LARL_ETC(NUM_TIME_STEPS // 5 , 15), ARUCB(env_params['K']), SWUCB(env_params['K']), Rexp3(NUM_TIME_STEPS, NUM_TIME_STEPS)]
+    AGENTS = [LARL_ETC(NUM_TIME_STEPS // 5 , 15), StationaryAgent(), ARUCB(env_params['K']), SWUCB(env_params['K']), Rexp3(NUM_TIME_STEPS, NUM_TIME_STEPS)]
     
     run_experiment(exp_name, env_name, env_params, AGENTS)
