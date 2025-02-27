@@ -44,6 +44,7 @@ class Rexp3:
             self.probs = np.ones(self.num_actions) / self.num_actions
 
 ### Predictive Sampling (Liu et al., 2023) ###
+# IN PROGRESS
 class PredictiveSampling:
     def __init__(self, num_actions=2):
         self.name = "PS"
@@ -60,5 +61,4 @@ class PredictiveSampling:
     
     def update(self, actions, rewards, states, t):
         action = actions[t]
-        reward = rewards[t]        
-        ## ANNA TODO
+        reward = rewards[t]
